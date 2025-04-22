@@ -62,7 +62,11 @@ namespace User
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseEndpoints(endpoints => endpoints.MapControllers());
+            app.UseEndpoints(endpoints => {
+                endpoints.MapControllers();
+                endpoints.MapGet("/", () => "User Service is running");
+                endpoints.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+            });
         }
     }
 }
