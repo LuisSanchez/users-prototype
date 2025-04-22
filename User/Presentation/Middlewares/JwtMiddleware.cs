@@ -20,8 +20,15 @@ namespace User.Presentation.Middlewares
 
         public async Task Invoke(HttpContext context)
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            // Skip JWT validation for health checks and root endpoint
+            if (context.Request.Path.StartsWithSegments("/health") || 
+                context.Request.Path == "/")
+            {
+                await _next(context);
+                return;
+            }
 
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
             if (token != null)
             {
                 AttachUserToContext(context, token);
