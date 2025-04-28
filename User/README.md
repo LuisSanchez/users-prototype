@@ -123,6 +123,21 @@ Key Features:
 - JWT-based authentication
 - Configurable services
 
+# Usage example:
+
+```
+# Check service status
+curl http://localhost:5138
+
+# Verify health check
+curl -k https://localhost:7138/health
+
+# Test registration (example)
+curl -k -X POST https://localhost:7138/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"P@ssw0rd!","firstName":"Test","lastName":"User"}'
+```
+
 ## Future Improvements
 - Add database integration
 - Implement password reset flow

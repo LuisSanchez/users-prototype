@@ -1,34 +1,51 @@
 using User.Domain.Models;
 using User.Application.Interfaces;
 using UserEntity = User.Domain.Models.User;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using User.Infrastructure.Data;
 
 namespace User.Infrastructure.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        public Task<UserEntity> GetByIdAsync(int id)
+        private readonly ApplicationDbContext _context;
+
+        public UserRepository(ApplicationDbContext context)
         {
-            // Implementation for getting user by ID
-            throw new NotImplementedException();
+            _context = context;
         }
 
-        public Task<UserEntity> GetByEmailAsync(string email)
+        public async Task<UserEntity?> GetByIdAsync(int id)
         {
-            // Implementation for getting user by email
-            throw new NotImplementedException();
+            return await _context.Users
+                .Include(u => u.Profile)
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public Task AddAsync(UserEntity user)
+        public async Task<UserEntity?> GetByEmailAsync(string email)
         {
-            // Implementation for adding new user
-            throw new NotImplementedException();
+            return await _context.Users
+                .Include(u => u.Profile)
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        public async Task AddAsync(UserEntity user)
+        {
+            await _context.Users.AddAsync(user);
         }
 
         public Task UpdateAsync(UserEntity user)
         {
-            // Implementation for updating user
-            throw new NotImplementedException();
+            _context.Users.Update(user);
+            return Task.CompletedTask;
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

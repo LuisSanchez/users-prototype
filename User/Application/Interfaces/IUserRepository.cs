@@ -5,9 +5,10 @@ namespace User.Application.Interfaces
 {
     public interface IUserRepository
     {
-        Task<UserEntity> GetByIdAsync(int id);
-        Task<UserEntity> GetByEmailAsync(string email);
-        Task AddAsync(UserEntity user);
-        Task UpdateAsync(UserEntity user);
+        Task<Domain.Models.User?> GetByIdAsync(int id);
+        Task<Domain.Models.User?> GetByEmailAsync(string email);
+        Task AddAsync(Domain.Models.User user);
+        Task UpdateAsync(Domain.Models.User user);
+        Task SaveChangesAsync();
     }
 }
