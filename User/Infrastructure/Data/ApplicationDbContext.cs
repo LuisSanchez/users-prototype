@@ -20,6 +20,11 @@ namespace User.Infrastructure.Data
                 .HasOne(u => u.Profile)
                 .WithOne(p => p.User)
                 .HasForeignKey<Profile>(p => p.UserId);
+
+            modelBuilder.Entity<UserEntity>()
+                .HasOne(u => u.Role)
+                .WithMany()
+                .HasForeignKey(u => u.RoleId);
         }
     }
 }

@@ -6,14 +6,12 @@ namespace User.Infrastructure.Services
     {
         public string HashPassword(string password)
         {
-            // Implementation using BCrypt or similar
-            throw new NotImplementedException();
+            return BCrypt.Net.BCrypt.EnhancedHashPassword(password, 12);
         }
 
         public bool VerifyPassword(string hash, string password)
         {
-            // Implementation for password verification
-            throw new NotImplementedException();
+            return BCrypt.Net.BCrypt.EnhancedVerify(password, hash);
         }
     }
 }

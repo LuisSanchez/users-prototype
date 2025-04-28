@@ -9,9 +9,11 @@ using User.Application.Services;
 using User.Infrastructure.Repositories;
 using User.Infrastructure.Services;
 using User.Infrastructure.Configurations;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("http://0.0.0.0:5138", "https://0.0.0.0:7138");
+builder.WebHost.UseUrls("http://0.0.0.0:5150", "https://0.0.0.0:7150");
 
 // Load .env file
 Env.Load();
@@ -50,8 +52,50 @@ builder.Services.Configure<EmailConfig>(builder.Configuration.GetSection("Email"
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Configure Swagger with proper service registration
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c => 
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "User Service API", Version = "v1" });
+    
+    // Add JWT Auth to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer"
+    });
+    
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+    
+    // Include XML comments
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
+
 
 var app = builder.Build();
+
+// Configure Swagger UI
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Service v1"));
+}
 
 // Middleware pipeline
 // HTTPS redirection disabled for development
