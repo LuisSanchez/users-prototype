@@ -2,7 +2,13 @@ using User.Application.Interfaces;
 using User.Application.DTOs;
 using User.Domain.Models;
 using User.Infrastructure.Services;
+using User.Infrastructure.Configurations;
+using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 
 namespace User.Application.Services
 {
@@ -10,11 +16,16 @@ namespace User.Application.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly JwtConfig _jwtConfig;
 
-        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher)
+        public AuthService(
+            IUserRepository userRepository,
+            IPasswordHasher passwordHasher,
+            IOptions<JwtConfig> jwtConfig)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
+            _jwtConfig = jwtConfig.Value;
         }
         public async Task RegisterUser(RegisterDto registerDto)
         {
@@ -54,10 +65,37 @@ namespace User.Application.Services
             await _userRepository.SaveChangesAsync();
         }
 
-        public Task<string> Login(LoginDto loginDto)
+        public async Task<string> Login(LoginDto loginDto)
         {
-            // Implementation for user login
-            throw new NotImplementedException();
+            var user = await _userRepository.GetByEmailAsync(loginDto.Email);
+            if (user == null)
+            {
+                throw new Exception("Invalid credentials");
+            }
+
+            if (!_passwordHasher.VerifyPassword(user.PasswordHash, loginDto.Password))
+            {
+                throw new Exception("Invalid credentials");
+            }
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Secret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _jwtConfig.Issuer,
+                audience: _jwtConfig.Audience,
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(_jwtConfig.ExpiryMinutes),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         public Task RequestPasswordReset(string email)

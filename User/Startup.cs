@@ -8,6 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using User.Application.Interfaces;
+using User.Application.Services;
 using User.Infrastructure.Repositories;
 using User.Infrastructure.Data;
 
@@ -46,7 +47,12 @@ namespace User
 
             // Register services
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddControllers();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddControllers()
+                .AddApplicationPart(typeof(User.Presentation.Controllers.UserController).Assembly)
+                .AddApplicationPart(typeof(User.Application.Services.UserService).Assembly);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
